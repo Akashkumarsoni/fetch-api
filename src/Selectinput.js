@@ -3,10 +3,16 @@ import React, { useState } from "react";
 
 const SelectInput = (props) => {    
   const [inputText, setInputText] = useState("");
-  const [optionText,setOptionText]=useState("");
+  const [optionText,setOptionText]=useState("1");
   const getText = (e) => {
     setInputText(e);
-    props.getdata(e);
+    if(e===''){
+      props.getdata('1');
+    }
+    else{
+      props.getdata(e);
+    }
+    
   };
   const optionsuid = [
     { label: "Equals", value: "1" },

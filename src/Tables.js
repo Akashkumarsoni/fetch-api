@@ -15,7 +15,7 @@ import {
   Frame,
   Loading,
 } from "@shopify/polaris";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import "@shopify/polaris/build/esm/styles.css";
 import { useLocation } from "react-router-dom";
 import SelectInput from "./Selectinput";
@@ -29,8 +29,9 @@ function Dashboard() {
   const [counts, setCounts] = useState(10);
   const [pages, setPages] = useState(1);
   const [datacount, setDataCount] = useState(0);
-  const [selectuid, setSelectuid] = useState("");
+  const [selectopt, setSelectopt] = useState("");
   const [inpuid, setInpuid] = useState("");
+  const [mydata, setMydata] = useState([]);
   const [allkeys, setAllkeys] = useState([
     "user_id",
     "catalog",
@@ -50,36 +51,43 @@ function Dashboard() {
     { label: "Starts with", value: "5" },
     { label: "Ends with", value: "6" },
   ];
-  const handleSelectInputs = useCallback((value) => setInpuid(value), []);
 
-  const handleSelectUid = useCallback((value) => {
-    // alert(inpuid);
-    // setSelectuid(value);
-    // if (inpuid == "") {
-    //   alert("Input field is empty!");
-    // } else {
-    showfilterresult(pages, counts, value, "43453", "user_id");
-    // }
-  }, []);
-  const [inputText, setInputText] = useState("9090-99");
-  const [optionText, setOptionText] = useState("");
-  const getText = (e) => {
-    setInputText(e);
-  };
-  const getSelectValue = (e) => {
-    setOptionText(e);
-  };
-  const getdata=(data)=>{
+  useEffect(() => {
+    if (loading === false) {
+      setMydata([showselect, ...rows]);
+    } else {
+      setMydata([showselect]);
+    }
+  }, [rows]);
+
+  useEffect(() => {
+    if (inpuid === "") {
+    } else {
+      var showdatas = setTimeout(() => {
+        showfilterresult(pages, counts, selectopt, "user_id", inpuid);
+      }, 3000);
+    }
+    return () => {
+      clearTimeout(showdatas);
+    };
+  }, [inpuid, selectopt]);
+
+  const getdata = (data) => {
     setInpuid(data);
-  }
-  const getselectdata=(a)=>{
-    console.log(a)
-  }
-  console.log(inpuid)
+  };
+  const getselectdata = (a) => {
+    setSelectopt(a);
+    console.log(inpuid, selectopt);
+  };
+
   const [showselect, setShowselect] = useState(
-    allkeys.map((i,index) => [
-      <SelectInput plcaeholder={i} getdata={getdata} getselectdata={getselectdata} index={index}/>
-      
+    allkeys.map((i, index) => [
+      <SelectInput
+        plcaeholder={i}
+        getdata={getdata}
+        getselectdata={getselectdata}
+        index={index}
+      />,
     ])
   );
 
@@ -131,12 +139,17 @@ function Dashboard() {
         console.log(e);
       });
   };
-  const showfilterresult = (pg, ct, value, inpts, paltform) => {
+  const showfilterresult = (pg, ct, optns, paltform, value) => {
     pg = pages;
     ct = counts;
     setLoading(true);
     setRows([]);
-    const url = `https://fbapi.sellernext.com/frontend/admin/getAllUsers?activePage=${pg}&count=${ct}&filter[user_id][4]=43670`;
+    const url = new URL(`https://fbapi.sellernext.com/frontend/admin/getAllUsers?activePage=${pg}&count=${ct}&filter[${paltform}][${optns}]=${value}`);
+
+    // for (let i in allkeys) {
+      // url.searchParams.append(`filter[${paltform}][${optns}]`, value);
+    // }
+
     fetch(url, {
       method: "GET",
       headers: {
@@ -173,8 +186,6 @@ function Dashboard() {
   React.useEffect(() => {
     showresult(pages, counts);
   }, []);
-
-  const alldata = [showselect, ...rows];
 
   const viewres = () => {
     showresult();
@@ -232,8 +243,7 @@ function Dashboard() {
             </Card>
           </Page>
           <Page title="Sales by product">
-            {/* {showfilterresult()} */}
-            <Card>
+            {/* <Card>
               {loading === false ? (
                 <DataTable
                   columnContentTypes={[
@@ -256,7 +266,7 @@ function Dashboard() {
                     "Created at",
                     "Shops myshopify domain",
                   ]}
-                  rows={alldata}
+                  rows={mydata}
                 />
               ) : (
                 <>
@@ -267,7 +277,37 @@ function Dashboard() {
                   </div>
                 </>
               )}
-            </Card>
+            </Card> */}
+            {loading === true && (
+              <div style={{ height: "100px" }}>
+                <Frame>
+                  <Loading />
+                </Frame>
+              </div>
+            )}
+            <DataTable
+              columnContentTypes={[
+                "text",
+                "numeric",
+                "text",
+                "text",
+                "text",
+                "text",
+                "text",
+                "text",
+              ]}
+              headings={[
+                "User Id",
+                "Catalog",
+                "Shop domain",
+                "Shop email",
+                "Shop plan",
+                "Updated at",
+                "Created at",
+                "Shops myshopify domain",
+              ]}
+              rows={mydata}
+            />
           </Page>{" "}
         </>
       )}
